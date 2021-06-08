@@ -1,0 +1,380 @@
+
+
+
+
+Kubernetes Architecture:
+------------------------
+
+What is k8s?
+- It is container orchestration platform.
+
+- Docker, Rkt etc. =container runtime 
+
+
+
+k8s===> master/worker 
+
+cluster ===> master + worker nodes 
+
+
+
+Two Planes:
+-----------
+
+1. Control Plane (drivining components) **** Master Nodes****
+
+  The virtual machines where these control plane components will be installed... we call those as master nodes.
+
+  - We can have a single master node
+  - Or, multiple master nodes for control plane components high availability
+
+   - kube-apiserver 
+     - This is the centralized componenet in k8s
+     - All the components are going to talk to kube-apiserver.
+     - Only kube-apiserver has access to etcd
+     - kube-scheduler talks to kube-apiserver when it has to schdule a new pod/container
+     - kube-controllermanager talks to kube-apiserver to control controller components 
+     - kubelet also sends heart beat messages to kube-apiserver.
+     - kube-proxy also talks to kube-apiserver.
+
+     - kube-apiserver talks to kubelet.
+
+     REST API calls 
+
+     **** k8s is api driven ***** 
+
+     HTTP: stateless, client server, request response, http methods CRUD (POST, PUT, DELETE, CREATE, GET)
+     REST API: 
+
+
+     - Install: This will be installed on the master nodes. This component can be either installed as container (pod) or systemd service. 
+         * systemd or pod
+
+
+
+
+   - kube-scheduler
+       - install: master, systemd service or pod 
+   - kube-controllermanager
+      - install: master, systemd service or pod 
+   - etcd
+      - install: master, systemd service or pod 
+
+
+
+2. Data Plane  (doing components)  **** Worker Nodes *****
+
+   - kubelet (Agent )
+      - install: worker, systemd service 
+   - Container Runtime (Eg. Docker, Rkt, containerd)
+      - install: worker, systemd serverice
+   - kube-proxy 
+      - install: worker, systemd service or pod (container)
+   - coredns
+      - install: pod (container)
+
+--------------------------------------------
+
+
+Tools:
+
+- kubeadm (Control + Data)
+
+1.15
+
+1.16
+
+kubeadm==>
+
+- kubespray
+
+- AWS ... kops 
+
+- Azure ... aks-engine 
+
+- 
+
+Managed cluster (*Control + Optimized AMI )
+
+
+EKS .... Hardware + EC2 + OS + kube-apiserver 
+
+aks
+GKE 
+IKE 
+
+
+
+
+
+
+
+
+
+
+
+Installation of kubernetes: 
+
+
+API (http)
+
+
+
+
+Local program: 
+-------------
+
+login (if we are in front of the virtual machine)
+
+
+remote connectivity methods:
+
+
+(i) telnet: 
+
+(ii) SSH: 
+
+- listens on port 22
+- SSH supports different types of authentication.
+  - SSH supports username and password based authentication 
+    client: ssh username@10.0.2.25 
+
+
+  - SSH also supports asymmetric key based authtentication
+- It is based on Asymmetric encryption 
+  - It is based on 2 types of keys
+  - private key & public key 
+
+  * 
+
+SSH: 
+
+daemon:
+/etc/ssh/sshd_config 
+PasswordAuthentication yes 
+PublicKeyAuthentication yes 
+
+client: 
+/etc/ssh/ssh_config 
+
+
+
+
+container1
+
+main() {
+
+
+
+
+func1(){
+    .....
+}
+
+
+
+
+}
+
+
+main() {
+
+
+    func2() {
+        ...
+    }
+}
+
+
+Installing kubernetes cluster:
+------------------------------
+
+
+
+1. master nodes and worker nodes (VMS/Physical Servers) ====> Admins choice 
+
+
+2. 
+  Master Node: 
+  - kube-apiserver (pod)
+  - etcd  (pod)
+  - kube-scheduler (pod)
+  - kube-controllermanager (pod)
+  - coredns (pod)
+
+---------------------------------------
+  step1: Install Docker on Master node and Worker Node 
+  Reference: https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
+
+  ---
+  sudo apt-get update
+sudo apt-get install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common -y
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+apt-key fingerprint 0EBFCD88
+add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io -y
+----
+
+--------------------------------------
+  step2: Select a method of instllation (select supporting tool)
+
+  Supporting tools: 
+  - kubeadm***
+  - kops 
+  - kubespray 
+  - aks-engine etc.
+
+
+Step3:  
+
+kubeadm,kubectl and kubelet 
+
+
+kubeadm ===> master nodes and the worker nodes 
+kubelet ===> Only needed on the worker nodes...
+             *Master nodes
+
+kubectl ===> client 
+
+
+
+
+sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+
+
+Step4: 
+
+
+Only on the master node:
+
+
+kubeadm init --pod-network-cidr=192.168.0.0/16
+
+
+
+
+root@master:~# kubeadm init --pod-network-cidr=192.168.0.0/16
+W0612 02:33:00.987815   15804 configset.go:202] WARNING: kubeadm cannot validate component configs for API groups [kubelet.config.k8s.io kubeproxy.config.k8s.io]
+[init] Using Kubernetes version: v1.18.3
+[preflight] Running pre-flight checks
+        [WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver. The recommended driver is "systemd". Please follow the guide at https://kubernetes.io/docs/setup/cri/
+[preflight] Pulling images required for setting up a Kubernetes cluster
+[preflight] This might take a minute or two, depending on the speed of your internet connection
+[preflight] You can also perform this action in beforehand using 'kubeadm config images pull'
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Starting the kubelet
+[certs] Using certificateDir folder "/etc/kubernetes/pki"
+[certs] Generating "ca" certificate and key
+[certs] Generating "apiserver" certificate and key
+[certs] apiserver serving cert is signed for DNS names [master kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] andIPs [10.96.0.1 10.0.0.6]
+[certs] Generating "apiserver-kubelet-client" certificate and key
+[certs] Generating "front-proxy-ca" certificate and key
+[certs] Generating "front-proxy-client" certificate and key
+[certs] Generating "etcd/ca" certificate and key
+[certs] Generating "etcd/server" certificate and key
+[certs] etcd/server serving cert is signed for DNS names [master localhost] and IPs [10.0.0.6 127.0.0.1 ::1]
+[certs] Generating "etcd/peer" certificate and key
+[certs] etcd/peer serving cert is signed for DNS names [master localhost] and IPs [10.0.0.6 127.0.0.1 ::1]
+[certs] Generating "etcd/healthcheck-client" certificate and key
+[certs] Generating "apiserver-etcd-client" certificate and key
+[certs] Generating "sa" key and public key
+[kubeconfig] Using kubeconfig folder "/etc/kubernetes"
+[kubeconfig] Writing "admin.conf" kubeconfig file
+[kubeconfig] Writing "kubelet.conf" kubeconfig file
+[kubeconfig] Writing "controller-manager.conf" kubeconfig file
+[kubeconfig] Writing "scheduler.conf" kubeconfig file
+[control-plane] Using manifest folder "/etc/kubernetes/manifests"
+[control-plane] Creating static Pod manifest for "kube-apiserver"
+[control-plane] Creating static Pod manifest for "kube-controller-manager"
+W0612 02:33:25.797312   15804 manifests.go:225] the default kube-apiserver authorization-mode is "Node,RBAC"; using "Node,RBAC"
+[control-plane] Creating static Pod manifest for "kube-scheduler"
+W0612 02:33:25.798446   15804 manifests.go:225] the default kube-apiserver authorization-mode is "Node,RBAC"; using "Node,RBAC"
+[etcd] Creating static Pod manifest for local etcd in "/etc/kubernetes/manifests"
+[wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests". This can take up to 4m0s
+[kubelet-check] Initial timeout of 40s passed.
+[apiclient] All control plane components are healthy after 49.502415 seconds
+[upload-config] Storing the configuration used in ConfigMap "kubeadm-config" in the "kube-system" Namespace
+[kubelet] Creating a ConfigMap "kubelet-config-1.18" in namespace kube-system with the configuration for the kubelets in the cluster
+[upload-certs] Skipping phase. Please see --upload-certs
+[mark-control-plane] Marking the node master as control-plane by adding the label "node-role.kubernetes.io/master=''"
+[mark-control-plane] Marking the node master as control-plane by adding the taints [node-role.kubernetes.io/master:NoSchedule]
+[bootstrap-token] Using token: n32jgw.5cn7n1ee3mh82nm8
+[bootstrap-token] Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles
+[bootstrap-token] configured RBAC rules to allow Node Bootstrap tokens to get nodes
+[bootstrap-token] configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
+[bootstrap-token] configured RBAC rules to allow the csrapprover controller automatically approve CSRs from a Node Bootstrap Token
+[bootstrap-token] configured RBAC rules to allow certificate rotation for all node client certificates in the cluster
+[bootstrap-token] Creating the "cluster-info" ConfigMap in the "kube-public" namespace
+[kubelet-finalize] Updating "/etc/kubernetes/kubelet.conf" to point to a rotatable kubelet client certificate and key
+[addons] Applied essential addon: CoreDNS
+[addons] Applied essential addon: kube-proxy
+
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 10.0.0.6:6443 --token n32jgw.5cn7n1ee3mh82nm8 \
+    --discovery-token-ca-cert-hash sha256:2e738e7e3335b9f443347233157b8b371c77d4161ac263485c7692c3d0082883
+
+
+
+
+Step5: 
+As a normal User on the master node: 
+
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+
+Step6: 
+
+Worker Node: 
+
+kubeadm join 10.0.0.6:6443 --token n32jgw.5cn7n1ee3mh82nm8 \
+    --discovery-token-ca-cert-hash sha256:2e738e7e3335b9f443347233157b8b371c77d4161ac263485c7692c3d0082883
+
+Step7: 
+
+Master Node (as a normal user):
+
+kubectl apply -f https://docs.projectcalico.org/v3.14/manifests/calico.yaml
+
+
+
+3. Worker Node: 
+
+  - kubelet 
+  - kube-proxy
+  - container run time (Docker )
